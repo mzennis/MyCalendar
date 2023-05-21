@@ -7,11 +7,13 @@ import java.time.format.DateTimeFormatter
  * Created by meyta.taliti on 20/05/23.
  */
 data class CalendarUiModel(
-    val startDate: LocalDate,
-    val endDate: LocalDate,
     val selectedDate: Date,
     val visibleDates: List<Date>
 ) {
+
+    val startDate: Date = visibleDates.first()
+    val endDate: Date = visibleDates.last()
+
     data class Date(
         val date: LocalDate,
         val isSelected: Boolean,

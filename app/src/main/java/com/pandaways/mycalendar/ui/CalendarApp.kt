@@ -82,7 +82,7 @@ fun Header(
                 .align(Alignment.CenterVertically)
         )
         IconButton(onClick = {
-            onPrevClickListener(data.startDate)
+            onPrevClickListener(data.startDate.date)
         }) {
             Icon(
                 imageVector = Icons.Filled.ChevronLeft,
@@ -90,7 +90,7 @@ fun Header(
             )
         }
         IconButton(onClick = {
-            onNextClickListener(data.endDate)
+            onNextClickListener(data.endDate.date)
         }) {
             Icon(
                 imageVector = Icons.Filled.ChevronRight,

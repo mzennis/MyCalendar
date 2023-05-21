@@ -37,8 +37,6 @@ class CalendarDataSource {
         lastSelectedDate: LocalDate
     ): CalendarUiModel {
         return CalendarUiModel(
-            startDate = dateList.first(),
-            endDate = dateList.last(),
             selectedDate = toItemUiModel(lastSelectedDate, true),
             visibleDates = dateList.map {
                 toItemUiModel(it, it.isEqual(lastSelectedDate))
