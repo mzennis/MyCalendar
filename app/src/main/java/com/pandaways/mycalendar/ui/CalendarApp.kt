@@ -42,16 +42,16 @@ fun CalendarApp(
             data = data,
             onPrevClickListener = { startDate ->
                 val finalStartDate = startDate.minusDays(1)
-                data = dataSource.getData(startDate = finalStartDate, lastSelectedDate = data.selectedDate)
+                data = dataSource.getData(startDate = finalStartDate, lastSelectedDate = data.selectedDate.date)
             },
             onNextClickListener = { endDate ->
                 val finalStartDate = endDate.plusDays(2)
-                data = dataSource.getData(startDate = finalStartDate, lastSelectedDate = data.selectedDate)
+                data = dataSource.getData(startDate = finalStartDate, lastSelectedDate = data.selectedDate.date)
             }
         )
         Content(data = data) { date ->
             data = data.copy(
-                selectedDate = date.date,
+                selectedDate = date,
                 visibleDates = data.visibleDates.map {
                     it.copy(
                         isSelected = it.date.isEqual(date.date)
@@ -70,9 +70,13 @@ fun Header(
 ) {
     Row {
         Text(
-            text = data.selectedDate.format(
-                DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-            ),
+            text = if (data.selectedDate.isToday) {
+                "Today"
+            } else {
+                data.selectedDate.date.format(
+                    DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
+                )
+            },
             modifier = Modifier
                 .weight(1f)
                 .align(Alignment.CenterVertically)

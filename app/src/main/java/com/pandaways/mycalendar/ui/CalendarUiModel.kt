@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter
 data class CalendarUiModel(
     val startDate: LocalDate,
     val endDate: LocalDate,
-    val selectedDate: LocalDate,
+    val selectedDate: Date,
     val visibleDates: List<Date>
 ) {
     data class Date(
