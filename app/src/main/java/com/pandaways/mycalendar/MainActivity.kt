@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pandaways.mycalendar.ui.CalendarApp
+import com.pandaways.mycalendar.ui.FullCalendarApp
 import com.pandaways.mycalendar.ui.theme.MyCalendarTheme
 
 
@@ -16,7 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyCalendarTheme {
-                CalendarApp(
+                FullCalendarApp(
                     modifier = Modifier.padding(16.dp)
                 )
             }
