@@ -3,6 +3,8 @@ package com.pandaways.mycalendar.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -105,10 +107,10 @@ fun Content(
     data: CalendarUiModel,
     onDateClickListener: (CalendarUiModel.Date) -> Unit,
 ) {
-    LazyRow {
-        items(items = data.visibleDates) { date ->
+    LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 48.dp)) {
+        items(data.visibleDates.size) { index ->
             ContentItem(
-                date = date,
+                date = data.visibleDates[index],
                 onDateClickListener
             )
         }
