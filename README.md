@@ -1,3 +1,6 @@
+# MyCalendar V2
+![meyta-mycalendar-v2](https://github.com/mzennis/MyCalendar/assets/7146225/9bee5271-4503-41d1-a55c-90d0215b63b6)
+
 # MyCalendar
 
 ### [Simple Calendar](https://github.com/mzennis/MyCalendar/blob/main/app/src/main/java/com/pandaways/mycalendar/ui/CalendarApp.kt)
