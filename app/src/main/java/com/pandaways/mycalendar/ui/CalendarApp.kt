@@ -1,24 +1,42 @@
 package com.pandaways.mycalendar.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pandaways.mycalendar.R
+import com.pandaways.mycalendar.data.CalendarUiState
 import com.pandaways.mycalendar.ui.theme.MyCalendarTheme
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import com.pandaways.mycalendar.ui.util.DateUtil
+import com.pandaways.mycalendar.ui.util.getDisplayName
+import java.time.YearMonth
 
 /**
  * Created by meyta.taliti on 20/05/23.
@@ -27,37 +45,45 @@ import java.time.format.FormatStyle
 @Composable
 fun CalendarAppPreview() {
     MyCalendarTheme {
-        CalendarApp(
-            modifier = Modifier.padding(16.dp)
-        )
+        CalendarApp()
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarApp(
-    modifier: Modifier = Modifier,
+    viewModel: CalendarViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
-    val dataSource = CalendarDataSource()
-    var data by remember { mutableStateOf(dataSource.getData(lastSelectedDate = dataSource.today)) }
-    Column(modifier = modifier.fillMaxSize()) {
-        Header(
-            data = data,
-            onPrevClickListener = { startDate ->
-                val finalStartDate = startDate.minusDays(1)
-                data = dataSource.getData(startDate = finalStartDate, lastSelectedDate = data.selectedDate.date)
-            },
-            onNextClickListener = { endDate ->
-                val finalStartDate = endDate.plusDays(2)
-                data = dataSource.getData(startDate = finalStartDate, lastSelectedDate = data.selectedDate.date)
-            }
-        )
-        Content(data = data) { date ->
-            data = data.copy(
-                selectedDate = date,
-                visibleDates = data.visibleDates.map {
-                    it.copy(
-                        isSelected = it.date.isEqual(date.date)
-                    )
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(id = R.string.app_name)) },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ))
+        }
+    ) { padding ->
+
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(padding)
+        ) {
+            CalendarWidget(
+                days = DateUtil.daysOfWeek,
+                yearMonth = uiState.yearMonth,
+                dates = uiState.dates,
+                onPreviousMonthButtonClicked = { prevMonth ->
+                    viewModel.toPreviousMonth(prevMonth)
+                },
+                onNextMonthButtonClicked = { nextMonth ->
+                    viewModel.toNextMonth(nextMonth)
+                },
+                onDateClickListener = {
+                    // TODO("set on date click listener")
                 }
             )
         }
@@ -65,96 +91,134 @@ fun CalendarApp(
 }
 
 @Composable
+fun CalendarWidget(
+    days: Array<String>,
+    yearMonth: YearMonth,
+    dates: List<CalendarUiState.Date>,
+    onPreviousMonthButtonClicked: (YearMonth) -> Unit,
+    onNextMonthButtonClicked: (YearMonth) -> Unit,
+    onDateClickListener: (CalendarUiState.Date) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row {
+            repeat(days.size) {
+                val item = days[it]
+                DayItem(item, modifier = Modifier.weight(1f))
+            }
+        }
+        Header(
+            yearMonth = yearMonth,
+            onPreviousMonthButtonClicked = onPreviousMonthButtonClicked,
+            onNextMonthButtonClicked = onNextMonthButtonClicked
+        )
+        Content(
+            dates = dates,
+            onDateClickListener = onDateClickListener
+        )
+    }
+}
+
+@Composable
 fun Header(
-    data: CalendarUiModel,
-    onPrevClickListener: (LocalDate) -> Unit,
-    onNextClickListener: (LocalDate) -> Unit,
+    yearMonth: YearMonth,
+    onPreviousMonthButtonClicked: (YearMonth) -> Unit,
+    onNextMonthButtonClicked: (YearMonth) -> Unit,
 ) {
     Row {
+        IconButton(onClick = {
+            onPreviousMonthButtonClicked.invoke(yearMonth.minusMonths(1))
+        }) {
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(id = R.string.back)
+            )
+        }
         Text(
-            text = if (data.selectedDate.isToday) {
-                "Today"
-            } else {
-                data.selectedDate.date.format(
-                    DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-                )
-            },
+            text = yearMonth.getDisplayName(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .weight(1f)
                 .align(Alignment.CenterVertically)
         )
         IconButton(onClick = {
-            onPrevClickListener(data.startDate.date)
+            onNextMonthButtonClicked.invoke(yearMonth.plusMonths(1))
         }) {
             Icon(
-                imageVector = Icons.Filled.ChevronLeft,
-                contentDescription = "Back"
+                imageVector = Icons.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(id = R.string.next)
             )
         }
-        IconButton(onClick = {
-            onNextClickListener(data.endDate.date)
-        }) {
-            Icon(
-                imageVector = Icons.Filled.ChevronRight,
-                contentDescription = "Next"
-            )
-        }
+    }
+}
+
+@Composable
+fun DayItem(day: String, modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        Text(
+            text = day,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(10.dp)
+        )
     }
 }
 
 @Composable
 fun Content(
-    data: CalendarUiModel,
-    onDateClickListener: (CalendarUiModel.Date) -> Unit,
+    dates: List<CalendarUiState.Date>,
+    onDateClickListener: (CalendarUiState.Date) -> Unit,
 ) {
-    LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 48.dp)) {
-        items(data.visibleDates.size) { index ->
-            ContentItem(
-                date = data.visibleDates[index],
-                onDateClickListener
-            )
+    Column {
+        var index = 0
+        repeat(6) {
+            Row {
+                repeat(7) {
+                    val item = if (index < dates.size) dates[index] else CalendarUiState.Date.Empty
+                    ContentItem(
+                        date = item,
+                        onClickListener = onDateClickListener,
+                        modifier = Modifier.weight(1f)
+                    )
+                    index++
+                }
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentItem(
-    date: CalendarUiModel.Date,
-    onClickListener: (CalendarUiModel.Date) -> Unit,
+    date: CalendarUiState.Date,
+    onClickListener: (CalendarUiState.Date) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier
-            .padding(vertical = 4.dp, horizontal = 4.dp)
+    Box(
+        modifier = modifier
+            .background(
+                color = if (date.isSelected) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    Color.Transparent
+                }
+            )
             .clickable {
                 onClickListener(date)
             }
-        ,
-        colors = CardDefaults.cardColors(
-            containerColor = if (date.isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.secondary
-            }
-        ),
     ) {
-        Column(
+        Text(
+            text = date.dayOfMonth,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
-                .width(40.dp)
-                .height(48.dp)
-                .padding(4.dp)
-        ) {
-            Text(
-                text = date.day,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = date.date.dayOfMonth.toString(),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
+                .align(Alignment.Center)
+                .padding(10.dp)
+        )
     }
 }
 
