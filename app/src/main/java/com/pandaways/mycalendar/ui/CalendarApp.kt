@@ -178,6 +178,7 @@ fun Content(
     Column {
         var index = 0
         repeat(6) {
+            if (index >= dates.size) return@repeat
             Row {
                 repeat(7) {
                     val item = if (index < dates.size) dates[index] else CalendarUiState.Date.Empty
